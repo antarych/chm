@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using MathNet.Numerics.Statistics.Mcmc;
 
 namespace QR_iter
 {
@@ -17,27 +16,27 @@ namespace QR_iter
             {
                 case 1:
                     Console.WriteLine();
-                    slau.SolveSlauQR();
+                    slau.SolveSlauQR(slau.Matrix, slau.B); //v
                     break;
                 case 2:
                     Console.WriteLine();
-                    slau.IterativeMethod();
+                    slau.IterativeMethod();  //хуйня
                     break;
                 case 3:
                     Console.WriteLine();
-                    slau.LUdecomposition();
+                    slau.LUdecomposition(); //v
                     break;
                 case 4:
                     Console.WriteLine();
-                    slau.UUTdecomposition();
+                    slau.UUTdecomposition(); //v
                     break;
                 case 5:
                     Console.WriteLine();
-                    slau.PowerIteration();
+                    slau.PowerIteration();  //v
                     break;
                 case 6:
                     Console.WriteLine();
-                    slau.QRdecomposition();
+                    slau.QRdecomposition(); //числа
                     break;
                 default:
                     Console.WriteLine();
@@ -121,7 +120,7 @@ namespace QR_iter
             {
                 for (int j = 0; j < Matrix.GetLength(0); j++)
                 {
-                    Console.Write("{0,5:0.000}  ", matrix[i, j]);
+                    Console.Write("{0,7:0.000}  ", matrix[i, j]);
                 }
                 Console.WriteLine();
                 Console.WriteLine();
@@ -361,28 +360,28 @@ namespace QR_iter
                 for (int j = 0; j < N; j++)
                 {
                     A[i, j] = Matrix[i, j];
-                    eigenvectors[i, i] = 1;
+                    if (i == j)
+                    {
+                        eigenvectors[i, j] = 1.0;
+                    }
+                    else
+                    {
+                        eigenvectors[i, j] = 0.0;
+                    }
                 }
             }
 
             do
             {
 
-                for (int i = 0; i < N; i++)
-                {
-                    for (int j = 0; j < N; j++)
-                    {
-                        Q[i, j] = 0;
-                        R[i, j] = 0;
-                        newA[i, j] = A[i, j];
-                    }
-                }
-
                 GetQR(A, Q, R);
+
+                var ev = MultiplyMatrix(eigenvectors, Q);
+                eigenvectors = ev;
 
                 newA = MultiplyMatrix(R, Q);
 
-                eigenvectors = MultiplyMatrix(eigenvectors, Q);
+
                 dif = 0.0;
                 for (int i = 0; i < N; i++)
                 {
@@ -404,7 +403,7 @@ namespace QR_iter
             Console.WriteLine("Собственные числа:");
             PrintResult(eigenvalues);
             Console.WriteLine("Собственные векторы:");
-            PrintMatrix(Rationing(Rationing(eigenvectors)));
+            PrintMatrix(Rationing(eigenvectors));
         }
 
         //нормирование
@@ -415,7 +414,7 @@ namespace QR_iter
                 var sum = 0.0;
                 for (int i = 0; i < N; i++)
                 {
-                    sum += eigenvectors[i, j]*eigenvectors[i, j];
+                    sum += eigenvectors[i, j] *eigenvectors[i, j];
                 }
                 for (int i = 0; i < N; i++)
                 {
@@ -426,15 +425,15 @@ namespace QR_iter
         }
 
         //решение СЛАУ с помощью QR-разложения
-        public void SolveSlauQR()
+        public double[] SolveSlauQR(double[,] matr, double[] b)
         {
-            var matrixB = Matrix;
+            var matrixB = matr;
             var Q = new double[B.Length, B.Length];
             var R = new double[B.Length, B.Length];
 
             GetQR(matrixB, Q, R);
 
-            var y = MultiplyMatrixVector(Q, B);
+            var y = MultiplyMatrixVector(Q, b);
             var x = new double[N];
 
             x[N - 1] = y[N - 1] / R[N - 1, N - 1];
@@ -448,14 +447,29 @@ namespace QR_iter
                 x[i] /= R[i, i];
 
             }
-            Console.WriteLine("Решение системы:");
-            PrintResult(x);
-
+            if (matr != Matrix)
+            {
+                return x;
+            }
+            else
+            {
+                Console.WriteLine("Решение системы:");
+                PrintResult(x);
+                return x;
+            }
         }
 
         //получение матриц Q и R
         private void GetQR(double[,] A, double[,] Q, double [,] R)
         {
+            for (int i = 0; i < N; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    Q[i, j] = 0.0;
+                    R[i, j] = 0.0;
+                }
+            }
             var QT = new double[N, N];
             for (int i = 0; i < N; i++)
                 QT[i, 0] = A[i, 0];
@@ -489,7 +503,7 @@ namespace QR_iter
             {
                 for (int j = 0; j < N; j++)
                 {
-                    Q[i, j] = QT[j, i];
+                    Q[i, j] = QT[i, j];
                 }
             }
         }
@@ -543,18 +557,22 @@ namespace QR_iter
                 for (int j = 1; j < N; j++)
                 {
                     var sum = 0.0;
-                    for (int k = 0; k < i-1; k++)
+                    for (int k = 0; k < i; k++)
                     {
                         sum += U[k, i] * U[k, i];
                     }
                     U[i, i] = Math.Sqrt(Matrix[i, i] - sum);
-                    sum = 0;
-                    for (int k = 0; k < i - 1; k++)
+                    if (i != j)
                     {
-                        sum += U[k, i] * U[k, j];
+                        sum = 0;
+                        for (int k = 0; k < i; k++)
+                        {
+                            sum += U[k, i] * U[k, j];
+                        }
+                        if (j < i) U[i, j] = 0;
+                        else
+                            U[i, j] = (Matrix[i, j] - sum) / U[i, i];
                     }
-                    U[i, j] = (Matrix[i, j] - sum) / U[i, i];
-                    if (j < i) U[i, j] = 0;
                 }
             }
             var UT = new double[N, N];
@@ -565,6 +583,8 @@ namespace QR_iter
                     UT[i, j] = U[j, i];
                 }
             }
+
+
             var flag = true;
             for (int j = 0; j < N; j++)
             {
@@ -646,6 +666,7 @@ namespace QR_iter
                     X0[i] = X[i];
                 }
             } while (e > eps);
+            X0norm = Rationing(X0norm);
             for (int i = 0; i < N; i++)
             {
                 eigenvector[i] = X0norm[i];
