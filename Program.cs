@@ -44,7 +44,6 @@ namespace QR_iter
                     break;
             }
 
-
             Console.ReadLine();
         }
     }
@@ -134,11 +133,14 @@ namespace QR_iter
         //реализация метода простых итераций
         public void IterativeMethod()
         {
-            Console.WriteLine("Задайте точность вычислений для итерационного метода:");
-            var eps = double.Parse(Console.ReadLine());
+            var eps = 0.0000001;
             Console.WriteLine();
             var c = new double[N];
-            var xk = B; //x(k)
+            var xk = new double[N]; //x(k)
+            for (int i = 0; i < N; i++)
+            {
+                xk[i] = B[i];
+            }
             var xknext = new double[N]; // x(k+1)
             var matrixB = new double[N, N];
             for (int i = 0; i < N; i++)
@@ -166,18 +168,17 @@ namespace QR_iter
                 while (!CheckConditionForIterativeMethod(xk, xknext, FindMatrixNorm(matrixB), eps))
                 {
                     for (int i = 0; i < N; i++)
-                    {
-                        xknext[i] = 0;
-                        for (int j = 0; j < N; j++)
-                        {
-                            xknext[i] += matrixB[i, j] * xk[j];
-                        }
-                        xknext[i] += c[i];
+                    {                        
+                        xk[i] = xknext[i];
                     }
-                    xk = xknext;
+                    xknext = MultiplyMatrixVector(matrixB, xk);
+                    for (int i = 0; i < N; i++)
+                    {
+                        xknext[i] = xknext[i] + c[i];
+                    }
                 }
                 Console.WriteLine("Решение системы:");
-                PrintResult(xknext);
+                PrintResult(xk);
             }
         }
 
@@ -219,12 +220,19 @@ namespace QR_iter
         private bool CheckConditionForIterativeMethod(double[] xk, double[] xknext, double q, double eps)
         {
             var x = new double[N];
-            for(int i = 0; i < N; i++)
+            for (int i = 0; i < N; i++)
             {
                 x[i] = Math.Abs(xknext[i] - xk[i]);
             }
-            if (x.Max() <= (1 - q) * eps / q ) { return true;}
+            if (x.Max() <= (1 - q) * eps / q) { return true; }
             return false;
+            //var error = 0.0;
+            //for (int i = 0; i < N; i++)
+            //{
+            //    error += Math.Abs(xknext[i] - xk[i]);
+            //}
+            //if (error < eps) return false;
+            //return true;
         }
 
 
@@ -621,8 +629,7 @@ namespace QR_iter
         //получение минимального собственного числа и соотвествующего вектора
         private double GetEigenvalue(double[,] matrix, double[] eigenvector)
         {
-            Console.WriteLine("Задайте точность вычислений для степенного метода:");
-            var eps = double.Parse(Console.ReadLine());
+            var eps = 0.000001;
             var X = new double[N];
             var X0 = new double[N];
             var X0norm = new double[N];
