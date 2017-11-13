@@ -20,7 +20,7 @@ namespace QR_iter
                     break;
                 case 2:
                     Console.WriteLine();
-                    slau.IterativeMethod();  //хуйня
+                    slau.IterativeMethod();  //v
                     break;
                 case 3:
                     Console.WriteLine();
@@ -226,13 +226,6 @@ namespace QR_iter
             }
             if (x.Max() <= (1 - q) * eps / q) { return true; }
             return false;
-            //var error = 0.0;
-            //for (int i = 0; i < N; i++)
-            //{
-            //    error += Math.Abs(xknext[i] - xk[i]);
-            //}
-            //if (error < eps) return false;
-            //return true;
         }
 
 
