@@ -400,11 +400,46 @@ namespace QR_iter
                     }
                 }
             } while (dif > 0.000001);
-
+            
             Console.WriteLine("Собственные числа:");
             PrintResult(eigenvalues);
-            Console.WriteLine("Собственные векторы:");
-            PrintMatrix(Rationing(eigenvectors));
+            for (int n = 0; n < N; n++)
+            {
+                for (int k = 0; k < N; k++)
+                {
+                    for (int j = 0; j < N; j++)
+                    {
+                        eigenvectors[k, j] = Matrix[k, j];
+                        if (k == j) eigenvectors[k, k] = Matrix[k, k] - eigenvalues[n];
+                    }
+                }
+
+                double tmp;
+                for (int i = 0; i < N; i++)
+                {
+                    tmp = eigenvectors[i, i];
+                    for (int j = N - 1; j >= i; j--)
+                        eigenvectors[i, j] /= tmp;
+                    for (int j = i + 1; j < N; j++)
+                    {
+                        tmp = eigenvectors[j, i];
+                        for (int k = N - 1; k >= i; k--)
+                            eigenvectors[j, k] -= tmp * eigenvectors[i, k];
+                    }
+                }
+                var eigenvector = new double[N];
+                eigenvector[N - 1] = eigenvectors[N - 1, N - 1];
+                for (int i = N - 2; i >= 0; i--)
+                {
+                    eigenvector[i] = eigenvectors[i, N - 1];
+                    for (int j = i; j < N; j++)
+                    {
+                        eigenvector[i] -= eigenvectors[i, j] * eigenvector[j];
+                    }
+                }
+                Console.WriteLine("Собственный вектор {0}:", n + 1);
+                PrintResult(Rationing(eigenvector));
+            }
         }
 
         //нормирование
